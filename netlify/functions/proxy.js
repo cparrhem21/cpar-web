@@ -1,7 +1,5 @@
 // netlify/functions/proxy.js
 
-const fetch = require('node-fetch');
-
 exports.handler = async (event, context) => {
   const url = event.queryStringParameters?.url;
 
@@ -13,15 +11,11 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // ✅ Forward the same HTTP method (GET or POST)
     const method = event.httpMethod;
-
-    // ✅ Forward headers
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
 
-    // ✅ Forward body only for POST
     const body = method === 'POST' ? event.body : undefined;
 
     const response = await fetch(url, {
