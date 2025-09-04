@@ -1,8 +1,7 @@
 // netlify/functions/proxy.js
-const fetch = require('cross-fetch'); // ✅ Use cross-fetch
 
 exports.handler = async (event, context) => {
-  const url = event.queryStringParameters.url;
+  const url = event.queryStringParameters?.url;
 
   if (!url) {
     return {
@@ -12,6 +11,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // ✅ Use built-in fetch (no require needed)
     const response = await fetch(url);
     const data = await response.text();
 
@@ -26,9 +26,13 @@ exports.handler = async (event, context) => {
       body: data,
     };
   } catch (error) {
+    console.error('Proxy failed:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Proxy failed', message: error.message }),
+      body: JSON.stringify({ 
+        error: 'Proxy failed', 
+        message: error.message 
+      }),
     };
   }
 };
