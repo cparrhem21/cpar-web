@@ -1,15 +1,6 @@
-[build]
-  # No build command — we're not building anything
-  # publish = "..." not needed
-
 [functions]
   directory = "netlify/functions"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-  [[plugins]]
-package = "@netlify/plugin-functions-install-core"
-
+# No [build] section
+# No publish
+# No command
