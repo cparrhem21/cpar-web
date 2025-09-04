@@ -2,9 +2,6 @@
   "name": "cpar-app",
   "version": "1.0.0",
   "scripts": {
-    "build": "echo 'Forcing Netlify build...'"
-  },
-  "engines": {
-    "node": "18.x"
+    "build": "flutter build web"
   }
 }
