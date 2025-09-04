@@ -1,6 +1,6 @@
 [build]
-  publish = "build/web"
-  command = "flutter build web"
+  # No build command — we're not building anything
+  # publish = "..." not needed
 
 [functions]
   directory = "netlify/functions"
