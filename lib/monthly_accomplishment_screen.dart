@@ -33,7 +33,7 @@ class MonthlyAccomplishmentScreen extends StatefulWidget {
 }
 
 class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScreen> {
-  // ✅ 1. Define your URLs
+  // ✅ Clean URLs (no extra spaces)
   final String marApiUrl = 'https://script.google.com/macros/s/AKfycbzGHwbf-cCTTNjy3YsDpAJH41M0eI78Lbf_Q4rnVOm6u58Nq36oHN9uoBY1H9dT2EvY/exec';
   final String proxyBaseUrl = 'https://cpar-web.netlify.app/.netlify/functions/proxy';
 
@@ -180,6 +180,8 @@ class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScree
             majorActivities = data.map((e) => e.toString()).toList();
           });
         }
+      } else {
+        print("fetchMajorActivities failed: ${response.statusCode} ${response.body}");
       }
     } catch (e) {
       print("Failed to load major activities: $e");
@@ -201,6 +203,8 @@ class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScree
             processedItems = data.map((e) => e.toString()).toList();
           });
         }
+      } else {
+        print("fetchProcessedItems failed: ${response.statusCode} ${response.body}");
       }
     } catch (e) {
       print("Failed to load processed items: $e");
@@ -218,8 +222,12 @@ class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScree
       final String url = '$proxyBaseUrl?url=$encodedUrl';
 
       final response = await http.get(Uri.parse(url));
-      final List<dynamic> data = json.decode(response.body);
+      if (response.statusCode != 200) {
+        print("loadUserEntries failed: ${response.statusCode} ${response.body}");
+        return;
+      }
 
+      final List<dynamic> data = json.decode(response.body);
       final entries = <int, List<WeekEntry>>{
         1: [],
         2: [],
@@ -311,33 +319,26 @@ class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScree
     }
 
     try {
-      // ✅ Delete old entries
-      final String deleteRawUrl = '$marApiUrl?action=deleteUserEntriesForWeeks'
-          '&userEmail=${Uri.encodeComponent(widget.userProfile.name)}'
-          '&month=${Uri.encodeComponent(selectedMonth)}'
-          '&year=$selectedYear'
-          '&weeks=${json.encode(weeksToSave.toList())}';
-      final String deleteEncodedUrl = Uri.encodeComponent(deleteRawUrl);
-      final String deleteUrl = '$proxyBaseUrl?url=$deleteEncodedUrl';
-      final deleteResponse = await http.get(Uri.parse(deleteUrl));
-      if (deleteResponse.statusCode != 200) throw Exception("Delete failed");
-
-      // ✅ Save new entries
-      final String saveRawUrl = '$marApiUrl?action=saveAllEntries'
-          '&userEmail=${Uri.encodeComponent(widget.userProfile.name)}'
-          '&month=${Uri.encodeComponent(selectedMonth)}'
-          '&year=$selectedYear'
-          '&entries=${Uri.encodeComponent(json.encode(allEntries))}';
-      final String saveEncodedUrl = Uri.encodeComponent(saveRawUrl);
-      final String saveUrl = '$proxyBaseUrl?url=$saveEncodedUrl';
-      final saveResponse = await http.get(Uri.parse(saveUrl));
-      if (saveResponse.statusCode != 200) throw Exception("Save failed");
-
-      await loadUserEntries();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ All entries saved!")),
+      // ✅ Use POST for large data
+      final response = await http.post(
+        Uri.parse('$proxyBaseUrl?url=$marApiUrl'),
+        body: {
+          'action': 'saveAllEntries',
+          'userEmail': widget.userProfile.name,
+          'month': selectedMonth,
+          'year': selectedYear.toString(),
+          'entries': json.encode(allEntries),
+        },
       );
+
+      if (response.statusCode == 200) {
+        await loadUserEntries();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("✅ All entries saved!")),
+        );
+      } else {
+        throw Exception("Save failed: ${response.statusCode}");
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Save failed: $e")),
@@ -374,6 +375,7 @@ class _MonthlyAccomplishmentScreenState extends State<MonthlyAccomplishmentScree
         bold: bold,
       );
 
+      // ✅ Fixed image URLs (no extra spaces)
       final logoLeftBytes = await http.readBytes(Uri.parse('https://raw.githubusercontent.com/cparrhem21/logos/main/denr_logo.png'));
       final logoRightBytes = await http.readBytes(Uri.parse('https://raw.githubusercontent.com/cparrhem21/logos/main/bp_logo.png'));
 
